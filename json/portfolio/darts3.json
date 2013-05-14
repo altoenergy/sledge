@@ -1,0 +1,29 @@
+{
+  "normalize" : true,
+  "elements" : [
+    {
+      "tradable" : "dummy10k1.spot",
+      "cost" : 0.00,
+      "observables" : [
+        "dummy10k1.r1",
+        "dummy10k1.r2"
+      ]
+    },
+    {
+      "tradable" : "dummy10k2.spot",
+      "cost" : 0.00,
+      "observables" : [
+        "dummy10k2.r1",
+        "dummy10k2.r2"
+      ]
+    },
+    {
+      "tradable" : "dummy10k3.spot",
+      "cost" : 0.00,
+      "observables" : [
+        "dummy10k3.r1",
+        "dummy10k3.r2"
+      ]
+    }
+  ]
+}

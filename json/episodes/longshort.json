@@ -1,0 +1,7 @@
+{
+  "fromDate" : 19851118,
+  "toDate" : 19881118,
+  "testDays" : 100,
+  "validateRatio" : 1,
+  "trainRatio" : 5
+}

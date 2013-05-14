@@ -1,0 +1,5 @@
+{
+  "init" : "rand",
+  "eval" : "exp",
+  "dFdW" : "numeric"
+}
