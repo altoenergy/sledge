@@ -3,10 +3,12 @@ import math
 import csv
 import json
 import numpy as np
+import util
 
 class Feature:
     def __init__(self, key, normalize):
-        self.date_, self.value_ = np.loadtxt(open("features/%s.feature" % key, "r"), delimiter = ',', unpack = True)
+        path = util.featurePath("%s.feature" % key)
+        self.date_, self.value_ = np.loadtxt(open(path, 'r'), delimiter = ',', unpack = True)
         self.date_ = self.date_.astype(np.int)
         if (normalize):
             st = np.std(self.value_)

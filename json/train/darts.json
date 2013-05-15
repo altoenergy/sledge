@@ -1,8 +1,0 @@
-{
-  "iters" : 1,
-  "draws" : 100,
-  "epochs" : 0,
-  "alpha" : 0.02,
-  "objective" : "sharp",
-  "threshold" : 0.25
-}

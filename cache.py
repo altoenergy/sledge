@@ -6,18 +6,19 @@ import shutil as sh
 import logging
 import pickle
 import cloud
+import util
 
 def get(key, remote):
     if remote:
         return pickle.loads(cloud.bucket.getf(key).read())
     else:
-        return pickle.load(open("cache/%s" % key, 'r'))
+        return pickle.load(open(util.cachePath(key), 'r'))
 
 def put(key, obj, remote):
     if remote:
         cloud.bucket.putf(pickle.dumps(obj), key)
     else:
-        path = "cache/%s" % key
+        path = util.cachePath(key)
         dire = os.path.dirname(path)
         if not os.path.exists(dire):
             os.makedirs(dire)       
@@ -52,7 +53,7 @@ def clear(prefix, remote):
         k = cloud.call(delete_prefix, prefix)
         return cloud.result(k)
     else:
-        path = "cache/%s" % prefix
+        path = util.cachePath(prefix)
         if (os.path.isdir(path)):
             sh.rmtree(path)
         elif (os.path.isfile(path)):
