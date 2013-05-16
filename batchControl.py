@@ -9,6 +9,9 @@ import util
 import portfolio as ptf
 import batcher
 
+cloud.config.log_level = 'ERROR'
+cloud.config.commit()
+
 while (True):
     try:
         print "------batch=?------remote=?------debug=?------"
