@@ -23,7 +23,23 @@ def put(key, obj, remote):
         if not os.path.exists(dire):
             os.makedirs(dire)       
         pickle.dump(obj, open(path, 'w'))
-        
+
+def xpath(obj, path):
+    elem = obj
+    if (path == ""):
+        return elem
+    try:
+        for x in path.strip("/").split("/"):
+            try:
+                x = int(x)
+                elem = elem[x]
+            except ValueError:
+                elem = elem.get(x)
+    except:
+        pass
+
+    return elem
+
 def delete_prefix(prefix):
     num_threads = 10
     object_iterator = cloud.bucket.iterlist(prefix=prefix)

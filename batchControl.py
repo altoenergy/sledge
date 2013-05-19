@@ -8,6 +8,7 @@ import cloud
 import util
 import portfolio as ptf
 import batcher
+import Tkinter as tk
 
 cloud.config.log_level = 'ERROR'
 cloud.config.commit()
@@ -37,6 +38,7 @@ while (True):
                     print "dump      :  dump a cache item"
                     print "delete    :  delete a cache item"
                     print "?         :  display help"
+                    print "quit      :  quit"
                 elif (action == "portfolio"):
                     name = util.get_str_input("name (%s) : " % batch, batch)
                     portfolioParams = util.load_json_file("portfolio/%s.json" % name)
@@ -78,8 +80,21 @@ while (True):
                     batcher.run(batch, clear, remote)
                 elif (action == "dump"):
                     key = util.get_str_input("key (report) : ", "report")
+                    path = util.get_str_input("path () : ", "")
                     obj = cache.get("%s/%s" % (batch, key), remote)
+                    obj = cache.xpath(obj, path)
                     pp.pprint(obj)
+                elif (action == "export"):
+                    key = util.get_str_input("key (report) : ", "report")
+                    path = util.get_str_input("path () : ", "")
+                    obj = cache.get("%s/%s" % (batch, key), remote)
+                    obj = cache.xpath(obj, path)
+                    cl = tk.Tk()
+                    #cl.withdraw()
+                    #cl.clipboard_clear()
+                    cl.clipboard_append(pp.pformat(obj))
+                    #cl.destroy()
+                    #pp.pprint(obj)
                 elif (action == "delete"):
                     key = util.get_str_input("key (train) : ", "train")
                     prefix = "%s/%s" % (batch, key)
@@ -88,8 +103,10 @@ while (True):
                         logging.info(k)
                     else:
                         cache.clear(prefix, False)
+                elif (action == "quit"):
+                    sys.exit()
                 else:
-                    print "action %s unkown" % action
+                    print "action %s unknown" % action
             except (KeyboardInterrupt):
                 pass
                 print ""
