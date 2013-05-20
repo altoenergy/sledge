@@ -40,23 +40,28 @@ def train(batch, i, j, remote):
                 
         winner_ = []
         for k in range(draws):
-            logging.info("draw %s" % k)
-            W_ = w.init(portfolio.jMax, wParams)
-                            
-            for e in range(epochs + 1):
-                if (e > 0):
-                    W_ = moo.run_epoch(portfolio, W_, alpha, wParams)
-                F__ = w.run_W(portfolio, W_, wParams)
-                logging.debug(F__)
-                logging.debug(portfolio.x___)
-                S = obj.score(objective, portfolio, F__)
-                if (e == 0):
-                    logging.info("SInit : %s", S)
-                if (S >= threshold):
-                    winner_.append({'W_' : W_, 'F__' : F__, 'S' : S})
-                    break
-                
-            logging.info("SFinal : %s", S)
+            try:
+                logging.info("draw %s" % k)
+                W_ = w.init(portfolio.jMax, wParams)
+                                
+                for e in range(epochs + 1):
+                    if (e > 0):
+                        W_ = moo.run_epoch(portfolio, W_, alpha, wParams)
+                    F__ = w.run_W(portfolio, W_, wParams)
+                    logging.debug(F__)
+                    logging.debug(portfolio.x___)
+                    S = obj.score(objective, portfolio, F__)
+                    if (e == 0):
+                        logging.info("SInit : %s", S)
+                    if (S >= threshold):
+                        winner_.append({'W_' : W_, 'F__' : F__, 'S' : S})
+                        break
+                logging.info("SFinal : %s", S)
+            except (KeyboardInterrupt):
+                raise
+            except:
+                result['error'] = sys.exc_info()[0]
+                logging.info("error %s", result['error'])                
         
         logging.info("winners : %s" % len(winner_))
         
