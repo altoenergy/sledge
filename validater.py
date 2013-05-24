@@ -31,13 +31,16 @@ def validate(batch, i, remote):
         
         numTrainIters = trainParams['iters']
         
+        accumulate = validateParams['accumulate']
         objective = validateParams['objective']
         threshold = validateParams['threshold']
             
         trainLibrary = []
         winner_ = []
         numCandidates = 0
-        for iTrain in range(i + 1):
+        iTrainFrom = 0 if accumulate else i
+        iTrainTo = i + 1
+        for iTrain in range(iTrainFrom, iTrainTo):
             for j in range(numTrainIters):
                 logging.info("train %s.%s : " % (iTrain, j))
                 trainResult = cache.get("%s/train/%s.%s" % (batch, iTrain, j), remote)
