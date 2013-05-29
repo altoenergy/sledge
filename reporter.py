@@ -29,6 +29,8 @@ def report(batch, remote):
             SMean = testResult['SMean']
             if (SMean is not None):
                 SMean_.append(SMean)
+            else:
+                SMean_.append(0)
                 
         SMean_ = np.array(SMean_)
         SMeanMean = np.mean(SMean_)
