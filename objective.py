@@ -9,7 +9,7 @@ def score(objective, portfolio, F__):
         return sharp(portfolio, F__)
     else:
         return 0
-
+    
 def is_winner(winners, objective, threshold, portfolio, W_, wParams):
     F__ = w.run_W(portfolio, W_, wParams)  
     S = score(objective, portfolio, F__)
@@ -34,3 +34,4 @@ def sharp(portfolio, F__):
     B = sumR2 / portfolio.tMax
     S = A / (math.sqrt(B - A * A))
     return S
+    

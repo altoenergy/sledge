@@ -11,27 +11,38 @@ import w
 def report(batch, remote):
     logging.info("--------------")
     
-    result = {'success' : False, 'error' : None, 'SMeanMean' : None}
+    result = {'success' : False, 'error' : None}
 
     try:
         params = cache.get("%s/params" % batch, remote)
         episodesParams = params['episodes']
         episodes = epi.build_episodes(episodesParams)
         
+        testParams = params['test']
+        objective = testParams['objective']
+        
+        SMean_ = []
         numEpisodes = episodes['num']
-        numSuccess = 0
-        SMeanMean = 0
+        SMeanTotal = 0
         for i in range(numEpisodes):
             testResult = cache.get("%s/test/%s" % (batch, i), remote)
             SMean = testResult['SMean']
-            logging.info("S mean : %s" % SMean)            
             if (SMean is not None):
-                SMeanMean += SMean
-                numSuccess += 1
-        SMeanMean /= numSuccess
-        logging.info("S mean mean : %s" % SMeanMean)
+                SMean_.append(SMean)
+                
+        SMean_ = np.array(SMean_)
+        SMeanMean = np.mean(SMean_)
+        SMeanMin = np.min(SMean_)
+        SMeanMax = np.max(SMean_)
+            
+        logging.info("SMeanMean : %s" % SMeanMean)
+        logging.info("SMeanMin : %s" % SMeanMin)
+        logging.info("SMeanMax : %s" % SMeanMax)
         result['success'] = True
+        result['SMean_'] = list(SMean_)
         result['SMeanMean'] = SMeanMean
+        result['SMeanMin'] = SMeanMin
+        result['SMeanMax'] = SMeanMax
         
     except (KeyboardInterrupt):
         raise

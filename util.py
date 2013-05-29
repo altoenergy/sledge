@@ -19,6 +19,8 @@ def get_str_input(prompt, default):
     response = raw_input(prompt)
     if (response == ""):
         return default
+    if (response == "_"):
+        return ""
     return response
 
 def get_bool_input(prompt, default):

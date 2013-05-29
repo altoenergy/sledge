@@ -15,10 +15,8 @@ remote = util.get_bool_input("remote (False) : ", False)
 debug = util.get_bool_input("debug (False) : ", False)
 logging.basicConfig(level = logging.DEBUG if debug else logging.INFO)
 
-clear = util.get_bool_input("clear (False) : ", False)
-
 i_ = range(iFrom, iTo)
 for i in i_:
     batch = "%s/%s" % (root, i)
     logging.info("running %s", batch)
-    batcher.run(batch, clear, remote)
+    batcher.run(batch, remote)

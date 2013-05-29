@@ -14,25 +14,18 @@ import validater
 import tester
 import reporter
 
-def run(batch, clear, remote):
-    if (clear):
-        logging.info("clearing %s train, validate, test" % batch)
-        cache.clear("%s/train" % batch, remote)
-        cache.clear("%s/validate" % batch, remote)
-        cache.clear("%s/test" % batch, remote)
+def run(batch, remote):
     k_Train = train(batch, remote)
     k_Validate = validate(batch, remote, dependency = k_Train)
     k_Test = test(batch, remote, dependency = k_Validate)
     kReport = report(batch, remote, dependency = k_Test)
     cache.put("%s/jobs" % batch, {'train' : list(k_Train), 'validate' : list(k_Validate), 'test' : list(k_Test), 'report' : kReport}, remote)
-    
+
 def create(batch, params, remote):
     logging.info("caching %s locally" % batch)
-    cache.clear("%s" % batch, False)
     cache.put("%s/params" % batch, params, False)
     if (remote):
         logging.info("caching %s remotely" % batch)
-        cache.clear("%s" % batch, True)
         cache.put("%s/params" % batch, params, True)
 
 def train(batch, remote, dependency = []):

@@ -8,30 +8,22 @@ import batcher
 root = util.get_str_input("root (bulk) : ", "bulk")
 remote = util.get_bool_input("remote (False) : ", False)
 portfolioName = util.get_str_input("portfolio (default) : ", "default")
-clear = util.get_bool_input("clear (False) : ", False)
 
 debug = False
 logging.basicConfig(level = logging.DEBUG if debug else logging.INFO)
 
-trainRatio_ = [3, 5, 9]
-alpha_ = [0.01, 0.02, 0.05, 0.1]
-threshold_ = [0.10, 0.15, 0.25]
+trainRatio_ = [1, 3, 5, 9]
+alpha_ = [0.01, 0.05, 0.1]
+threshold_ = [0.05, 0.15, 0.25, 0.4]
 
 i = 0
-if (clear):
-    logging.info("clearing %s locally" % root)
-    cache.clear(root, False)
-    if (remote):
-        logging.info("clearing %s remotely" % root)
-        cache.clear(root, True)
-        
 for trainRatio in trainRatio_:
     for alpha in alpha_:
         for threshold in threshold_:
             batch = "%s/%s" % (root, i)
             episodesParams = {
                 "fromDate" : 19851118,
-                "toDate" : 20130404,
+                "toDate" : 19920922,
                 "testDays" : 100,
                 "validateRatio" : 1,
                 "trainRatio" : trainRatio
@@ -45,6 +37,7 @@ for trainRatio in trainRatio_:
                 "threshold" : threshold
             }
             validateParams = {
+                "accumulate" : True,
                 "objective" : "sharp",
                 "threshold" : threshold
             }
