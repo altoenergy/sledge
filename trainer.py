@@ -9,7 +9,7 @@ import objective as obj
 import w
 import moody as moo
     
-def train(batch, i, j, remote):
+def train(batch, params, i, j, remote):
     logging.info("--------------")
     logging.info("episode %s" % i)
     logging.info("iter %s" % j)
@@ -17,7 +17,6 @@ def train(batch, i, j, remote):
     result = {'success' : False, 'error' : None, 'winners' : []}
     
     try:
-        params = cache.get("%s/params" % batch, remote)
         portfolio = cache.get(params['portfolioKey'], remote)
         episodesParams = params['episodes']
         episodes = epi.build_episodes(episodesParams)
@@ -73,6 +72,6 @@ def train(batch, i, j, remote):
         result['error'] = sys.exc_info()[0]
         logging.info("error %s", result['error'])
 
-    cache.put("%s/train/%s.%s" % (batch, i, j), result, remote)
+    cache.put("batch/%s/train/%s.%s" % (batch, i, j), result, remote)
     logging.info("--------------")
     return result

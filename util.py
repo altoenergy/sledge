@@ -34,3 +34,19 @@ def get_int_input(prompt, default):
     if (response == ""):
         return default
     return int(response)
+
+def xpath_elem(obj, path):
+    elem = obj
+    if (path == ""):
+        return elem
+    try:
+        for x in path.strip("/").split("/"):
+            try:
+                x = int(x)
+                elem = elem[x]
+            except ValueError:
+                elem = elem.get(x)
+    except:
+        pass
+
+    return elem

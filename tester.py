@@ -8,14 +8,13 @@ import portfolio as ptf
 import objective as obj
 import w
 
-def test(batch, i, remote):
+def test(batch, params, i, remote):
     logging.info("--------------")
     logging.info("episode %s" % i)
     
     result = {'success' : False, 'error' : None}
     
     try:
-        params = cache.get("%s/params" % batch, remote)
         portfolio = cache.get(params['portfolioKey'], remote)
         episodesParams = params['episodes']
         episodes = epi.build_episodes(episodesParams)
@@ -31,7 +30,7 @@ def test(batch, i, remote):
         
         objective = testParams['objective']
         
-        validateResult = cache.get("%s/validate/%s" % (batch, i), remote)
+        validateResult = cache.get("batch/%s/validate/%s" % (batch, i), remote)
         validateWinner_ = validateResult['winners']
         numValidateWinners = len(validateWinner_)
                 
@@ -65,7 +64,7 @@ def test(batch, i, remote):
         result['error'] = sys.exc_info()[0]
         logging.info("error %s", result['error'])
 
-    cache.put("%s/test/%s" % (batch, i), result, remote)
+    cache.put("batch/%s/test/%s" % (batch, i), result, remote)
     logging.info("--------------")
     return result
 

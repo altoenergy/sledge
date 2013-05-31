@@ -8,13 +8,12 @@ import portfolio as ptf
 import objective as obj
 import w
 
-def report(batch, remote):
+def report(batch, params, remote):
     logging.info("--------------")
     
     result = {'success' : False, 'error' : None}
 
     try:
-        params = cache.get("%s/params" % batch, remote)
         episodesParams = params['episodes']
         episodes = epi.build_episodes(episodesParams)
         
@@ -25,8 +24,12 @@ def report(batch, remote):
         numEpisodes = episodes['num']
         SMeanTotal = 0
         for i in range(numEpisodes):
-            testResult = cache.get("%s/test/%s" % (batch, i), remote)
-            SMean = testResult['SMean']
+            testResult = cache.get("batch/%s/test/%s" % (batch, i), remote)
+            SMean = None
+            success = testResult['success']
+            if success:
+                SMean = testResult['SMean']
+                
             if (SMean is not None):
                 SMean_.append(SMean)
             else:
@@ -52,6 +55,6 @@ def report(batch, remote):
         result['error'] = sys.exc_info()[0]
         logging.info("error %s", result['error'])
 
-    cache.put("%s/report" % batch, result, remote)
+    cache.put("batch/%s/report" % batch, result, remote)
     logging.info("--------------")
     return result

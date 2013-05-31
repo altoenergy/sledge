@@ -7,14 +7,13 @@ import portfolio as ptf
 import objective as obj
 import w
 
-def validate(batch, i, remote):
+def validate(batch, params, i, remote):
     logging.info("--------------")
     logging.info("episode %s" % i)
     
     result = {'success' : False, 'error' : None, 'winners' : []}
     
     try:
-        params = cache.get("%s/params" % batch, remote)
         portfolio = cache.get(params['portfolioKey'], remote)
         episodesParams = params['episodes']
         episodes = epi.build_episodes(episodesParams)
@@ -43,7 +42,7 @@ def validate(batch, i, remote):
         for iTrain in range(iTrainFrom, iTrainTo):
             for j in range(numTrainIters):
                 logging.info("train %s.%s : " % (iTrain, j))
-                trainResult = cache.get("%s/train/%s.%s" % (batch, iTrain, j), remote)
+                trainResult = cache.get("batch/%s/train/%s.%s" % (batch, iTrain, j), remote)
                 trainWinner_ = trainResult['winners']
                 numCandidates += len(trainWinner_)
                 for trainWinner in trainWinner_:
@@ -64,6 +63,6 @@ def validate(batch, i, remote):
         result['error'] = sys.exc_info()[0]
         logging.info("error %s", result['error'])
 
-    cache.put("%s/validate/%s" % (batch, i), result, remote)
+    cache.put("batch/%s/validate/%s" % (batch, i), result, remote)
     logging.info("--------------")
     return result
