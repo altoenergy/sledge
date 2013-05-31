@@ -19,7 +19,7 @@ logging.getLogger().setLevel(level = logging.DEBUG if debug else logging.INFO)
 while (True):
     try:
         print "------study=%s------shift=%s------remote=%s------debug=%s------" % (study, shift, remote, debug)
-        action = util.get_str_input("action (?) : ", "?")
+        action = util.get_str_input("action () : ", "")
     except (KeyboardInterrupt):
         pass
         print ""
@@ -29,7 +29,9 @@ while (True):
         break
         
     try:
-        if (action == "?"):
+        if (action == ""):
+            pass
+        elif (action == "?"):
             print "portfolio :  create portfolio (can be slow)"
             print "study     :  specify study name"
             print "remote    :  toggle remote mode"
