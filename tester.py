@@ -16,8 +16,7 @@ def test(batch, params, i, remote):
     
     try:
         portfolio = cache.get(params['portfolioKey'], remote)
-        episodesParams = params['episodes']
-        episodes = epi.build_episodes(episodesParams)
+        episodes = params['episodes']
         testParams = params['test']
         wParams = params['w']
         logging.debug("testParams : %s" % testParams)

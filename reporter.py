@@ -14,14 +14,12 @@ def report(batch, params, remote):
     result = {'success' : False, 'error' : None}
 
     try:
-        episodesParams = params['episodes']
-        episodes = epi.build_episodes(episodesParams)
+        numEpisodes = params['episodes']['num']
         
         testParams = params['test']
         objective = testParams['objective']
         
         SMean_ = []
-        numEpisodes = episodes['num']
         SMeanTotal = 0
         for i in range(numEpisodes):
             testResult = cache.get("batch/%s/test/%s" % (batch, i), remote)

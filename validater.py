@@ -15,8 +15,7 @@ def validate(batch, params, i, remote):
     
     try:
         portfolio = cache.get(params['portfolioKey'], remote)
-        episodesParams = params['episodes']
-        episodes = epi.build_episodes(episodesParams)
+        episodes = params['episodes']
         validateParams = params['validate']
         logging.debug("validateParams : %s" % validateParams)
         trainParams = params['train']

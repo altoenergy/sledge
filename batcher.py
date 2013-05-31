@@ -44,16 +44,21 @@ def expand_shifts(study, params):
     return shifts
 
 def create_batches(study, remote):
-    params = util.load_json_file("study/%s.json" % study)
-    shifts = expand_shifts(study, params)
-    params['shift'] = shifts
+    origParams = util.load_json_file("study/%s.json" % study)
+    origParams['shift'] = expand_shifts(study, origParams)
     
+    baseParams = copy.deepcopy(origParams)
+    baseParams['episodes'] = epi.build_episodes(baseParams['episodes'])
+
+    shifts = baseParams['shift']    
     logging.info("Caching %s" % study)
-    cache.put("batch/%s/params" % study, params, remote)
+    cache.put("batch/%s/params" % study, baseParams, remote)
     target_ = shifts['target_']
     for name, amount_ in zip(shifts['name_'], shifts['amount__']):
+        params = copy.deepcopy(origParams)
         for target, amount in zip(target_, amount_):
             apply_shift(params, target, amount)
+        params['episodes'] = epi.build_episodes(params['episodes'])
         logging.info("Caching %s" % name)
         cache.put("batch/%s/params" % name, params, remote)
         
@@ -69,31 +74,38 @@ def act(action, study, shift, remote):
         create_batches(study, remote)
     elif (action == "train"):
         for batch in get_batch_names(study, shift, remote):
-            print batch
+            if shift:
+                print batch
             train(batch, remote)
     elif (action == "validate"):
         for batch in get_batch_names(study, shift, remote):
-            print batch
+            if shift:
+                print batch
             validate(batch, remote)
     elif (action == "test"):
         for batch in get_batch_names(study, shift, remote):
-            print batch
+            if shift:
+                print batch
             test(batch, remote)
     elif (action == "report"):
         for batch in get_batch_names(study, shift, remote):
-            print batch
+            if shift:
+                print batch
             report(batch, remote)
     elif (action == "*"):
         for batch in get_batch_names(study, shift, remote):
-            print batch
+            if shift:
+                print batch
             run(batch, remote)
     elif (action == "track"):
         for batch in get_batch_names(study, shift, remote):
-            print batch
+            if shift:
+                print batch
             track(batch, remote)
     elif (action == "review"):
         for batch in get_batch_names(study, shift, remote):
-            print batch
+            if shift:
+                print batch
             review(batch, remote)
     else:
         raise InputError("Action %s unknown" % action)
@@ -129,8 +141,7 @@ def run(batch, remote):
         
 def train(batch, remote, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
-    episodes = epi.build_episodes(params['episodes'])
-    numEpisodes = episodes['num']
+    numEpisodes = params['episodes']['num']
     
     trainParams = params['train']
     numIters = trainParams['iters']
@@ -149,8 +160,7 @@ def train(batch, remote, dependency = []):
 
 def validate(batch, remote, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
-    episodes = epi.build_episodes(params['episodes'])
-    numEpisodes = episodes['num']
+    numEpisodes = params['episodes']['num']
     
     i_ = range(numEpisodes)
     f = lambda i : validater.validate(batch, params, i, remote)
@@ -166,8 +176,7 @@ def validate(batch, remote, dependency = []):
 
 def test(batch, remote, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
-    episodes = epi.build_episodes(params['episodes'])
-    numEpisodes = episodes['num']
+    numEpisodes = params['episodes']['num']
     
     i_ = range(numEpisodes)
     f = lambda i : tester.test(batch, params, i, remote)

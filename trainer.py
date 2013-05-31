@@ -18,8 +18,7 @@ def train(batch, params, i, j, remote):
     
     try:
         portfolio = cache.get(params['portfolioKey'], remote)
-        episodesParams = params['episodes']
-        episodes = epi.build_episodes(episodesParams)
+        episodes = params['episodes']
         trainParams = params['train']
         logging.debug("trainParams : %s" % trainParams)
         wParams = params['w']
