@@ -6,14 +6,15 @@ import numpy as np
 import util
 
 class Feature:
-    def __init__(self, key, normalize):
+    def __init__(self, key, normalize, fromDate, toDate):
         path = util.featurePath("%s.feature" % key)
         self.date_, self.value_ = np.loadtxt(open(path, 'r'), delimiter = ',', unpack = True)
         self.date_ = self.date_.astype(np.int)
+        self.range_dates(fromDate, toDate)
         if (normalize):
             st = np.std(self.value_)
             m = np.mean(self.value_)
-            self.value_ = 1 + (self.value_ - m) / st
+            self.value_ = (self.value_ - m) / st
         
     @staticmethod
     def common_dates(feature_):
@@ -33,10 +34,12 @@ class Feature:
     
 class Portfolio:
     def __init__(self, portfolio):
+        fromDate = portfolio['fromDate']
+        toDate = portfolio['toDate']
         normalize = portfolio['normalize']
         elements = portfolio['elements']
-        self.tradable_ = [Feature(element['tradable'], False) for element in elements]
-        self.observable__ = [[Feature(observable, normalize) for observable in element['observables']] for element in elements]
+        self.tradable_ = [Feature(element['tradable'], False, fromDate, toDate) for element in elements]
+        self.observable__ = [[Feature(observable, normalize, fromDate, toDate) for observable in element['observables']] for element in elements]
         self.c_ = np.array([element['cost'] for element in elements], float)
         self.iMax = len(self.c_)
         self.jLen_ = np.array([len(observable_) + 2 for observable_ in self.observable__])

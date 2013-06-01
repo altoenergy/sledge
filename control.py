@@ -51,7 +51,7 @@ while (True):
             print "quit      :  quit"
             print "?         :  display help"
         elif (action == "portfolio"):
-            name = util.get_str_input("name (%s) : " % batch, batch)
+            name = util.get_str_input("name (%s) : " % study, study)
             portfolioParams = util.load_json_file("portfolio/%s.json" % name)
             portfolio = ptf.Portfolio(portfolioParams)
             cache.put('portfolio/%s' % name, portfolio, remote)
