@@ -43,8 +43,9 @@ def expand_shifts(study, params):
         shifts['name_'] = ["%s/%s" % (study, i) for i in range(len(amount__))]
     return shifts
 
-def create_batches(study, remote):
+def create_batches(portfolio, study, remote):
     origParams = util.load_json_file("study/%s.json" % study)
+    origParams['portfolioKey'] = "portfolio/%s" % portfolio
     origParams['shift'] = expand_shifts(study, origParams)
     
     baseParams = copy.deepcopy(origParams)
@@ -70,9 +71,7 @@ def get_batch_names(study, shift, remote):
         return [study]
 
 def act(action, study, shift, remote):
-    if (action == "create"):
-        create_batches(study, remote)
-    elif (action == "train"):
+    if (action == "train"):
         for batch in get_batch_names(study, shift, remote):
             if shift:
                 print batch

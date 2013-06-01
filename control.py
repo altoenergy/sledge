@@ -64,7 +64,10 @@ while (True):
         elif (action == "debug"):
             debug = not debug
             logging.getLogger().setLevel(level = logging.DEBUG if debug else logging.INFO)
-        elif (action in ["create", "train", "validate", "test", "report", "*", "track", "review"]):
+        elif (action == "create"):
+            portfolio = util.get_str_input("portfolio () : ", "")
+            batcher.create_batches(portfolio, study, remote)
+        elif (action in ["train", "validate", "test", "report", "*", "track", "review"]):
             batcher.act(action, study, shift, remote)
         elif (action == "dump" or action == "export"):
             key = util.get_str_input("key (report) : ", "report")
