@@ -8,10 +8,10 @@ import portfolio as ptf
 import objective as obj
 import w
 
-def report(batch, params, remote):
+def report(batch, params, remote, debug):
     logging.info("--------------")
     
-    result = {'success' : False, 'error' : None}
+    result = {'success' : False, 'error' : 'none'}
 
     try:
         numEpisodes = params['episodes']['num']
@@ -19,34 +19,26 @@ def report(batch, params, remote):
         testParams = params['test']
         objective = testParams['objective']
         
-        SMean_ = []
-        SMeanTotal = 0
+        SBlend_ = []
         for i in range(numEpisodes):
             testResult = cache.get("batch/%s/test/%s" % (batch, i), remote)
-            SMean = None
+            SBlend = None
             success = testResult['success']
             if success:
-                SMean = testResult['SMean']
-                
-            if (SMean is not None):
-                SMean_.append(SMean)
-            else:
-                SMean_.append(0)
-                
-        SMean_ = np.array(SMean_)
-        SMeanMean = np.mean(SMean_)
-        SMeanMin = np.min(SMean_)
-        SMeanMax = np.max(SMean_)
+                SBlend_.append(testResult['SBlend'])
+
+        SBlend_ = np.array(SBlend_)
+        SBlendMean = np.mean(SBlend_)
+        SBlendMin = np.min(SBlend_)
+        SBlendMax = np.max(SBlend_)
             
-        logging.info("SMeanMean : %s" % SMeanMean)
-        logging.info("SMeanMin : %s" % SMeanMin)
-        logging.info("SMeanMax : %s" % SMeanMax)
-        result['success'] = True
-        result['SMean_'] = list(SMean_)
-        result['SMeanMean'] = SMeanMean
-        result['SMeanMin'] = SMeanMin
-        result['SMeanMax'] = SMeanMax
+        logging.info("SBlendMean : %s" % SBlendMean)
+        logging.info("SBlendMin : %s" % SBlendMin)
+        logging.info("SBlendMax : %s" % SBlendMax)
         
+        result = {'success' : True, 'error' : 'none', 'SBlendMean' : SBlendMean, 'SBlendMin' : SBlendMin, 'SBlendMax' : SBlendMax}
+        if (debug):
+            result.update({'SBlend_' : list(SBlend_)})        
     except (KeyboardInterrupt):
         raise
     except Exception:

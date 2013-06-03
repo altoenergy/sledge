@@ -8,11 +8,11 @@ import portfolio as ptf
 import objective as obj
 import w
 
-def test(batch, params, i, remote):
+def test(batch, params, i, remote, debug):
     logging.info("--------------")
     logging.info("episode %s" % i)
     
-    result = {'success' : False, 'error' : None}
+    result = {'success' : False, 'error' : 'none'}
     
     try:
         portfolio = cache.get(params['portfolioKey'], remote)
@@ -30,33 +30,42 @@ def test(batch, params, i, remote):
         objective = testParams['objective']
         
         validateResult = cache.get("batch/%s/validate/%s" % (batch, i), remote)
-        validateWinner_ = validateResult['winners']
+        validateWinner_ = validateResult['winner_']
         numValidateWinners = len(validateWinner_)
                 
         logging.info("candidates : %s" % numValidateWinners)
         
         F__Total = np.zeros([portfolio.tMax, portfolio.iMax])
         S_ = []
+        provenance_ = []
         for validateWinner in validateWinner_:
             W_ = validateWinner['W_']
+            provenance = validateWinner['provenance']
             F__ = w.run_W(portfolio, W_, wParams)
             S = obj.score(objective, portfolio, F__)
             logging.info("S : %s" % S)
             S_.append(S)
+            provenance_.append(provenance)
             F__Total += F__
 
-        F__Mean = None
-        SMean = None
+        F__Blend = None
+        SBlend = 0
         if (numValidateWinners > 0):
-            F__Mean = F__Total / numValidateWinners
-            SMean = obj.score(objective, portfolio, F__Mean)
+            F__Blend = F__Total / numValidateWinners
+            SBlend = obj.score(objective, portfolio, F__Blend)
             
-        logging.info("S mean : %s" % SMean)
+        logging.info("SBlend : %s" % SBlend)
         
-        result['F__Mean'] = F__Mean
-        result['SMean'] = SMean        
-        result['success'] = True
-        result['S_'] = S_
+        header_0 = ["t", "date"]
+        header_1 = ["F[%s]" % k for k in range(portfolio.iMax)]
+        header_2 = ["r[%s]" % k for k in range(portfolio.iMax)]
+        header__ = [header_0 + header_1 + header_2]
+        body__ = [[j] + [portfolio.date_[j]] + list(F__Blend[j]) + list(portfolio.r__[j]) for j in range(portfolio.tMax)]
+        excel__ = header__ + body__
+        excelStr = "\n".join([",".join(str(val) for val in row) for row in excel__])
+        #excelStr = "\n".join(str(excel__))
+        
+        result = {'success' : True, 'error' : 'none', 'SBlend' : SBlend, 'provenance' : provenance_, 'F__Blend' : F__Blend, 'excel' : excelStr}
     except (KeyboardInterrupt):
         raise
     except Exception:

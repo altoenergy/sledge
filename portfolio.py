@@ -43,7 +43,7 @@ class Portfolio:
         self.c_ = np.array([element['cost'] for element in elements], float)
         self.iMax = len(self.c_)
         self.jLen_ = np.array([len(observable_) + 2 for observable_ in self.observable__])
-        self.jMax = np.sum(self.jLen_)
+        self.jLen = np.sum(self.jLen_)
 
         jTo_ = np.cumsum(self.jLen_)
         jFrom_ = np.roll(jTo_, 1)
@@ -51,9 +51,10 @@ class Portfolio:
         self.jFromTo_ = zip(jFrom_, jTo_)
         
         feature_ = self.tradable_ + [item for sublist in self.observable__ for item in sublist]
-        self.commonDate_ = Feature.common_dates(feature_)
+        commonDate_ = Feature.common_dates(feature_)
         for feature in feature_:
-            feature.filter_dates(self.commonDate_)
+            feature.filter_dates(commonDate_)
+        self.date_Orig = commonDate_
             
         price__ = np.swapaxes(np.array([tradable.value_ for tradable in self.tradable_], float), 0, 1)
         self.r__Orig = price__ - np.roll(price__, 1, 0)
@@ -63,9 +64,10 @@ class Portfolio:
         self.x___Orig = np.array([self.split(self.observation__Orig[t]) for t in range(self.tMaxOrig)]) # (date x asset x feature)
 
     def instantiate(self, fromDate, toDate):
-        npCommonDate_ = np.array(self.commonDate_)
-        fromIdx = (np.abs(npCommonDate_ - fromDate)).argmin()
-        toIdx = (np.abs(npCommonDate_ - toDate)).argmin()
+        npDate_Orig = np.array(self.date_Orig)
+        fromIdx = (np.abs(npDate_Orig - fromDate)).argmin()
+        toIdx = (np.abs(npDate_Orig - toDate)).argmin() + 1
+        self.date_ = self.date_Orig[fromIdx:toIdx]
         self.r__ = self.r__Orig[fromIdx:toIdx]
         self.tMax = len(self.r__)
         self.observation__ = self.observation__Orig[fromIdx:toIdx]

@@ -14,7 +14,8 @@ study = "default"
 shift = False
 remote = False
 debug = False
-logging.getLogger().setLevel(level = logging.DEBUG if debug else logging.INFO)
+pvdebug = False
+logging.getLogger().setLevel(level = logging.DEBUG if pvdebug else logging.INFO)
 
 while (True):
     try:
@@ -63,16 +64,19 @@ while (True):
             shift = not shift
         elif (action == "debug"):
             debug = not debug
-            logging.getLogger().setLevel(level = logging.DEBUG if debug else logging.INFO)
+        elif (action == "pvdebug"):
+            pvdebug = not pvdebug
+            print pvdebug
+            logging.getLogger().setLevel(level = logging.DEBUG if pvdebug else logging.INFO)
         elif (action == "create"):
             portfolio = util.get_str_input("portfolio () : ", "")
             batcher.create_batches(portfolio, study, remote)
         elif (action in ["train", "validate", "test", "report", "*", "track", "review"]):
-            batcher.act(action, study, shift, remote)
+            batcher.act_study(action, study, shift, remote, debug)
         elif (action == "dump" or action == "export"):
             key = util.get_str_input("key (report) : ", "report")
             xpath = util.get_str_input("xpath () : ", "")
-            batcher.dump(study, shift, remote, key, xpath, action == "export")
+            batcher.dump_study(study, shift, remote, key, xpath, action == "export")
         elif (action == "clear"):
             key = util.get_str_input("key (batch/%s) : " % study, "batch/%s" % study)
             if (remote):

@@ -5,7 +5,7 @@ import portfolio as ptf
 import w
   
 def dF_dW_numeric(portfolio, F__, w__, dw, wParams):
-    dF_dW_ = np.empty([portfolio.iMax, portfolio.jMax])
+    dF_dW_ = np.empty([portfolio.iMax, portfolio.jLen])
     F_base = w.eval_w(F__[0], portfolio.x___[1], w__, wParams)
     J = 0
     for i in range(portfolio.iMax):
@@ -18,7 +18,7 @@ def dF_dW_numeric(portfolio, F__, w__, dw, wParams):
     return dF_dW_
 
 def dF_dW_init_ES(portfolio, F__, w__, dw):
-    dF_dW_ = np.empty([portfolio.iMax, portfolio.jMax])
+    dF_dW_ = np.empty([portfolio.iMax, portfolio.jLen])
     for n in range(portfolio.iMax):
         J = 0
         for i in range(portfolio.iMax):

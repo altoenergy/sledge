@@ -9,12 +9,12 @@ import objective as obj
 import w
 import moody as moo
     
-def train(batch, params, i, j, remote):
+def train(batch, params, i, j, remote, debug):
     logging.info("--------------")
     logging.info("episode %s" % i)
     logging.info("iter %s" % j)
     
-    result = {'success' : False, 'error' : None, 'winners' : []}
+    result = {'success' : False, 'error' : 'none'}
     
     try:
         portfolio = cache.get(params['portfolioKey'], remote)
@@ -37,11 +37,12 @@ def train(batch, params, i, j, remote):
         threshold = trainParams['threshold']
                 
         winner_ = []
+        loser_ = []
         for k in range(draws):
             try:
                 logging.info("draw %s" % k)
-                W_ = w.init(portfolio.jMax, wParams)
-                                
+                W_ = w.init(portfolio.jLen, wParams)
+
                 for e in range(epochs + 1):
                     if (e > 0):
                         W_ = moo.run_epoch(portfolio, W_, alpha, wParams)
@@ -52,9 +53,15 @@ def train(batch, params, i, j, remote):
                     if (e == 0):
                         logging.info("SInit : %s", S)
                     if (S >= threshold):
-                        winner_.append({'W_' : W_, 'F__' : F__, 'S' : S})
                         break
                 logging.info("SFinal : %s", S)
+                outcome = {'W_' : W_, 'provenance' : i}
+                if (debug):
+                    outcome.update({'S' : S, 'F__' : F__})
+                if (S >= threshold):
+                    winner_.append(outcome)
+                else:
+                    loser_.append(outcome)
             except (KeyboardInterrupt):
                 raise
             except:
@@ -62,9 +69,9 @@ def train(batch, params, i, j, remote):
                 logging.info("error %s", result['error'])                
         
         logging.info("winners : %s" % len(winner_))
+        logging.info("losers : %s" % len(loser_))
         
-        result['success'] = True
-        result['winners'] = winner_
+        result = {'success' : True, 'error' : 'none', 'winner_' : winner_, 'loser_' : loser_}
     except (KeyboardInterrupt):
         raise
     except:

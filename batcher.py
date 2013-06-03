@@ -1,9 +1,9 @@
 import sys
 import logging
 import itertools as it
-import pprint as pp
 import collections as co
 import Tkinter as tk
+import pprint as pp
 import numpy as np
 import copy
 import cloud
@@ -11,6 +11,7 @@ import cache
 import util
 import episodes as epi
 import portfolio as ptf
+import objective as obj
 import episodes as epi
 import trainer
 import validater
@@ -59,6 +60,7 @@ def create_batches(portfolio, study, remote):
         params = copy.deepcopy(origParams)
         for target, amount in zip(target_, amount_):
             apply_shift(params, target, amount)
+        del params['shift']
         params['episodes'] = epi.build_episodes(params['episodes'])
         logging.info("Caching %s" % name)
         cache.put("batch/%s/params" % name, params, remote)
@@ -70,46 +72,46 @@ def get_batch_names(study, shift, remote):
     else:
         return [study]
 
-def act(action, study, shift, remote):
+def act_study(action, study, shift, remote, debug):
     if (action == "train"):
         for batch in get_batch_names(study, shift, remote):
             if shift:
                 print batch
-            train(batch, remote)
+            train_batch(batch, remote, debug)
     elif (action == "validate"):
         for batch in get_batch_names(study, shift, remote):
             if shift:
                 print batch
-            validate(batch, remote)
+            validate_batch(batch, remote, debug)
     elif (action == "test"):
         for batch in get_batch_names(study, shift, remote):
             if shift:
                 print batch
-            test(batch, remote)
+            test_batch(batch, remote, debug)
     elif (action == "report"):
         for batch in get_batch_names(study, shift, remote):
             if shift:
                 print batch
-            report(batch, remote)
+            report_batch(batch, remote, debug)
     elif (action == "*"):
         for batch in get_batch_names(study, shift, remote):
             if shift:
                 print batch
-            run(batch, remote)
+            run_batch(batch, remote, debug)
     elif (action == "track"):
         for batch in get_batch_names(study, shift, remote):
             if shift:
                 print batch
-            track(batch, remote)
+            track_batch(batch, remote, debug)
     elif (action == "review"):
         for batch in get_batch_names(study, shift, remote):
             if shift:
                 print batch
-            review(batch, remote)
+            review_batch(batch, remote, debug)
     else:
         raise InputError("Action %s unknown" % action)
 
-def dump(study, shift, remote, key, xpath, clipboard):
+def dump_study(study, shift, remote, key, xpath, clipboard):
     cl = tk.Tk() if clipboard else None
     params = cache.get("batch/%s/params" % study, remote)
     if shift:
@@ -126,19 +128,19 @@ def dump(study, shift, remote, key, xpath, clipboard):
                 cl.clipboard_append("%s\n" % outStr)
     else:
         elem = util.xpath_elem(cache.get("batch/%s/%s" % (study, key), remote), xpath)
-        outStr = pp.pformat(elem)
+        outStr = elem if xpath == "excel" else pp.pformat(elem)
         print outStr
         if clipboard:
             cl.clipboard_append(outStr)
 
-def run(batch, remote):
-    k_Train = train(batch, remote)
-    k_Validate = validate(batch, remote, dependency = k_Train)
-    k_Test = test(batch, remote, dependency = k_Validate)
-    kReport = report(batch, remote, dependency = k_Test)
+def run_batch(batch, remote, debug):
+    k_Train = train_batch(batch, remote, debug)
+    k_Validate = validate_batch(batch, remote, debug, dependency = k_Train)
+    k_Test = test_batch(batch, remote, debug, dependency = k_Validate)
+    kReport = report_batch(batch, remote, debug, dependency = k_Test)
     cache.put("batch/%s/jobs" % batch, {'train' : list(k_Train), 'validate' : list(k_Validate), 'test' : list(k_Test), 'report' : kReport}, remote)
         
-def train(batch, remote, dependency = []):
+def train_batch(batch, remote, debug, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
     numEpisodes = params['episodes']['num']
     
@@ -146,7 +148,7 @@ def train(batch, remote, dependency = []):
     numIters = trainParams['iters']
     
     ij_ = [(i, j) for i, j in it.product(range(numEpisodes), range(numIters))]
-    f = lambda (i, j) : trainer.train(batch, params, i, j, remote)
+    f = lambda (i, j) : trainer.train(batch, params, i, j, remote, debug)
     
     logging.info("running %s train instances" % len(ij_))
     if (remote):
@@ -157,12 +159,12 @@ def train(batch, remote, dependency = []):
         results = map(f, ij_)
         return results
 
-def validate(batch, remote, dependency = []):
+def validate_batch(batch, remote, debug, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
     numEpisodes = params['episodes']['num']
     
     i_ = range(numEpisodes)
-    f = lambda i : validater.validate(batch, params, i, remote)
+    f = lambda i : validater.validate(batch, params, i, remote, debug)
     
     logging.info("running %s validate instances" % len(i_))
     if (remote):
@@ -173,12 +175,12 @@ def validate(batch, remote, dependency = []):
         results = map(f, i_)
         return results
 
-def test(batch, remote, dependency = []):
+def test_batch(batch, remote, debug, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
     numEpisodes = params['episodes']['num']
     
     i_ = range(numEpisodes)
-    f = lambda i : tester.test(batch, params, i, remote)
+    f = lambda i : tester.test(batch, params, i, remote, debug)
     
     logging.info("running %s test instances" % len(i_))
     if (remote):
@@ -189,18 +191,18 @@ def test(batch, remote, dependency = []):
         results = map(f, i_)
         return results
         
-def report(batch, remote, dependency = []):
+def report_batch(batch, remote, debug, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
     logging.info("running reporter instance")
     if (remote):
-        k = cloud.call(reporter.report, batch, params, remote, _label = "%s/report" % batch, _depends_on = dependency, _type = 'c1', _max_runtime = 30)
+        k = cloud.call(reporter.report, batch, params, remote, debug, _label = "%s/report" % batch, _depends_on = dependency, _type = 'c1', _max_runtime = 30)
         logging.info("k %s" % k)
         return k
     else:
-        result = reporter.report(batch, params, remote)
+        result = reporter.report(batch, params, remote, debug)
         return result
 
-def track(batch, remote):
+def track_batch(batch, remote, debug):
     if (not remote):
         logging.info("cannot track locally")
         return
@@ -211,7 +213,7 @@ def track(batch, remote):
     count = co.Counter(status_)
     print count
 
-def review(batch, remote):
+def review_batch(batch, remote, debug):
     if (not remote):
         logging.info("cannot review locally")
         return
