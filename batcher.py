@@ -199,7 +199,7 @@ def report(batch, remote, dependency = []):
     else:
         result = reporter.report(batch, params, remote)
         return result
-    
+
 def track(batch, remote):
     if (not remote):
         logging.info("cannot track locally")
