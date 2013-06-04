@@ -33,114 +33,87 @@ def apply_shift(params, target, amount):
     else:
         raise InputError("Shift target %s unknown" % target)
 
-def expand_shifts(study, params):
+def expand_shifts(study, portfolio, params):
     shiftParams = params.get('shift')
-    shifts = {'count' : 0, 'target_' : [], 'name_' : [], 'amount__' : []}
+    shifts = {'count' : 0, 'target_' : [], 'batch_' : [], 'amount__' : []}
     if (shiftParams):
         shifts['target_'] = shiftParams.keys()
         amount__ = list(it.product(*(shiftParams.values())))
         shifts['amount__'] = amount__
         shifts['count'] = len(amount__)
-        shifts['name_'] = ["%s/%s" % (study, i) for i in range(len(amount__))]
+        shifts['batch_'] = ["%s-%s/%s" % (study, portfolio, i) for i in range(len(amount__))]
     return shifts
 
-def create_batches(portfolio, study, remote):
+def prepare(study, portfolio, remote):
     origParams = util.load_json_file("study/%s.json" % study)
     origParams['portfolioKey'] = "portfolio/%s" % portfolio
-    origParams['shift'] = expand_shifts(study, origParams)
+    origParams['shift'] = expand_shifts(study, portfolio, origParams)
     
     baseParams = copy.deepcopy(origParams)
     baseParams['episodes'] = epi.build_episodes(baseParams['episodes'])
 
     shifts = baseParams['shift']    
-    logging.info("Caching %s" % study)
-    cache.put("batch/%s/params" % study, baseParams, remote)
+    logging.info("Caching %s-%s/base" % (study, portfolio))
+    cache.put("batch/%s-%s/base/params" % (study, portfolio), baseParams, remote)
     target_ = shifts['target_']
-    for name, amount_ in zip(shifts['name_'], shifts['amount__']):
+    for batch, amount_ in zip(shifts['batch_'], shifts['amount__']):
         params = copy.deepcopy(origParams)
         for target, amount in zip(target_, amount_):
             apply_shift(params, target, amount)
         del params['shift']
         params['episodes'] = epi.build_episodes(params['episodes'])
-        logging.info("Caching %s" % name)
-        cache.put("batch/%s/params" % name, params, remote)
-        
-def get_batch_names(study, shift, remote):        
-    if shift:
-        params = cache.get("batch/%s/params" % study, remote)
-        return params['shift']['name_']
-    else:
-        return [study]
+        logging.info("Caching %s" % batch)
+        cache.put("batch/%s/params" % batch, params, remote)
 
-def act_study(action, study, shift, remote, debug):
-    if (action == "train"):
-        for batch in get_batch_names(study, shift, remote):
-            if shift:
-                print batch
-            train_batch(batch, remote, debug)
-    elif (action == "validate"):
-        for batch in get_batch_names(study, shift, remote):
-            if shift:
-                print batch
-            validate_batch(batch, remote, debug)
-    elif (action == "test"):
-        for batch in get_batch_names(study, shift, remote):
-            if shift:
-                print batch
-            test_batch(batch, remote, debug)
-    elif (action == "report"):
-        for batch in get_batch_names(study, shift, remote):
-            if shift:
-                print batch
-            report_batch(batch, remote, debug)
-    elif (action == "*"):
-        for batch in get_batch_names(study, shift, remote):
-            if shift:
-                print batch
-            run_batch(batch, remote, debug)
-    elif (action == "track"):
-        for batch in get_batch_names(study, shift, remote):
-            if shift:
-                print batch
-            track_batch(batch, remote, debug)
-    elif (action == "review"):
-        for batch in get_batch_names(study, shift, remote):
-            if shift:
-                print batch
-            review_batch(batch, remote, debug)
+def interpret_batches(study, portfolio, batch, remote):
+    params = cache.get("batch/%s-%s/base/params" % (study, portfolio), remote)
+    base = "%s-%s/base" % (study, portfolio)
+    shifts = params['shift']['batch_']
+    if (batch == "base"):
+        return [base]
+    elif (batch == "*"):
+        return [base] + shifts
     else:
-        raise InputError("Action %s unknown" % action)
+        return [shifts[int(batch)]]
 
-def dump_study(study, shift, remote, key, xpath, clipboard):
+def dump(batch, remote, key, xpath, clipboard):
     cl = tk.Tk() if clipboard else None
-    params = cache.get("batch/%s/params" % study, remote)
+    elem = util.xpath_elem(cache.get("batch/%s/%s" % (batch, key), remote), xpath)
+    outStr = elem if xpath == "excel" else pp.pformat(elem)
+    print outStr
+    if clipboard:
+        cl.clipboard_append(outStr)
+
+def dump_old(study, portfolio, shift, remote, key, xpath, clipboard):
+    cl = tk.Tk() if clipboard else None
+    params = cache.get("batch/%s-%s/params" % (study, portfolio), remote)
     if shift:
         shifts = params['shift']
         outStr = "name," + ",".join(shifts['target_']) +",value"
         print outStr
         if clipboard:
             cl.clipboard_append("%s\n" % outStr)
-        for name, amount_ in zip(shifts['name_'], shifts['amount__']):
-            elem = util.xpath_elem(cache.get("batch/%s/%s" % (name, key), remote), xpath)
-            outStr = name + "," + ",".join(map(str, amount_)) + "," + pp.pformat(elem)
+        for batch, amount_ in zip(shifts['batch_'], shifts['amount__']):
+            elem = util.xpath_elem(cache.get("batch/%s/%s" % (batch, key), remote), xpath)
+            outStr = batch + "," + ",".join(map(str, amount_)) + "," + pp.pformat(elem)
             print outStr
             if clipboard:
                 cl.clipboard_append("%s\n" % outStr)
     else:
-        elem = util.xpath_elem(cache.get("batch/%s/%s" % (study, key), remote), xpath)
+        elem = util.xpath_elem(cache.get("batch/%s-%s/%s" % (study, portfolio, key), remote), xpath)
         outStr = elem if xpath == "excel" else pp.pformat(elem)
         print outStr
         if clipboard:
             cl.clipboard_append(outStr)
 
-def run_batch(batch, remote, debug):
-    k_Train = train_batch(batch, remote, debug)
-    k_Validate = validate_batch(batch, remote, debug, dependency = k_Train)
-    k_Test = test_batch(batch, remote, debug, dependency = k_Validate)
-    kReport = report_batch(batch, remote, debug, dependency = k_Test)
+def run(batch, remote, debug):
+    k_Train = train(batch, remote, debug)
+    k_Validate = validate(batch, remote, debug, dependency = k_Train)
+    k_Test = test(batch, remote, debug, dependency = k_Validate)
+    kReport = report(batch, remote, debug, dependency = k_Test)
     cache.put("batch/%s/jobs" % batch, {'train' : list(k_Train), 'validate' : list(k_Validate), 'test' : list(k_Test), 'report' : kReport}, remote)
         
-def train_batch(batch, remote, debug, dependency = []):
+def train(batch, remote, debug, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
     numEpisodes = params['episodes']['num']
     
@@ -159,7 +132,7 @@ def train_batch(batch, remote, debug, dependency = []):
         results = map(f, ij_)
         return results
 
-def validate_batch(batch, remote, debug, dependency = []):
+def validate(batch, remote, debug, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
     numEpisodes = params['episodes']['num']
     
@@ -175,7 +148,7 @@ def validate_batch(batch, remote, debug, dependency = []):
         results = map(f, i_)
         return results
 
-def test_batch(batch, remote, debug, dependency = []):
+def test(batch, remote, debug, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
     numEpisodes = params['episodes']['num']
     
@@ -191,7 +164,7 @@ def test_batch(batch, remote, debug, dependency = []):
         results = map(f, i_)
         return results
         
-def report_batch(batch, remote, debug, dependency = []):
+def report(batch, remote, debug, dependency = []):
     params = cache.get("batch/%s/params" % batch, remote)
     logging.info("running reporter instance")
     if (remote):
@@ -202,7 +175,7 @@ def report_batch(batch, remote, debug, dependency = []):
         result = reporter.report(batch, params, remote, debug)
         return result
 
-def track_batch(batch, remote, debug):
+def track(batch, remote, debug):
     if (not remote):
         logging.info("cannot track locally")
         return
@@ -213,7 +186,7 @@ def track_batch(batch, remote, debug):
     count = co.Counter(status_)
     print count
 
-def review_batch(batch, remote, debug):
+def review(batch, remote, debug):
     if (not remote):
         logging.info("cannot review locally")
         return
