@@ -22,10 +22,11 @@ def report(batch, params, remote, debug):
         SBlend_ = []
         for i in range(numEpisodes):
             testResult = cache.get("batch/%s/test/%s" % (batch, i), remote)
-            SBlend = None
             success = testResult['success']
             if success:
                 SBlend_.append(testResult['SBlend'])
+            else:
+                SBlend_.append(0)
 
         SBlend_ = np.array(SBlend_)
         SBlendMean = np.mean(SBlend_)
@@ -36,9 +37,7 @@ def report(batch, params, remote, debug):
         logging.info("SBlendMin : %s" % SBlendMin)
         logging.info("SBlendMax : %s" % SBlendMax)
         
-        result = {'success' : True, 'error' : 'none', 'SBlendMean' : SBlendMean, 'SBlendMin' : SBlendMin, 'SBlendMax' : SBlendMax}
-        if (debug):
-            result.update({'SBlend_' : list(SBlend_)})        
+        result = {'success' : True, 'error' : 'none', 'SBlend_' : list(SBlend_), 'SBlendMean' : SBlendMean, 'SBlendMin' : SBlendMin, 'SBlendMax' : SBlendMax}
     except (KeyboardInterrupt):
         raise
     except Exception:

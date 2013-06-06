@@ -50,7 +50,7 @@ def prepare(study, portfolio, remote):
     origParams['shift'] = expand_shifts(study, portfolio, origParams)
     
     baseParams = copy.deepcopy(origParams)
-    baseParams['episodes'] = epi.build_episodes(baseParams['episodes'])
+    baseParams['episodes'].update(epi.build_episodes(baseParams['episodes']))
 
     shifts = baseParams['shift']    
     logging.info("Caching %s-%s/base" % (study, portfolio))
@@ -61,7 +61,7 @@ def prepare(study, portfolio, remote):
         for target, amount in zip(target_, amount_):
             apply_shift(params, target, amount)
         del params['shift']
-        params['episodes'] = epi.build_episodes(params['episodes'])
+        params['episodes'].update(epi.build_episodes(params['episodes']))
         logging.info("Caching %s" % batch)
         cache.put("batch/%s/params" % batch, params, remote)
 
@@ -74,7 +74,8 @@ def interpret_batches(study, portfolio, batch, remote):
     elif (batch == "*"):
         return [base] + shifts
     else:
-        return [shifts[int(batch)]]
+        batch_ = util.parse_number_list(batch)
+        return [shifts[batch] for batch in batch_]
 
 def dump(batch, remote, key, xpath, clipboard):
     cl = tk.Tk() if clipboard else None
@@ -176,15 +177,19 @@ def report(batch, remote, debug, dependency = []):
         return result
 
 def track(batch, remote, debug):
-    if (not remote):
-        logging.info("cannot track locally")
-        return
-    jobs = cache.get("batch/%s/jobs" % batch, remote)
-    k_ = jobs['train'] + jobs['validate'] + jobs['test'] + [jobs['report']]
-    
-    status_ = cloud.status(k_)
-    count = co.Counter(status_)
-    print count
+    try:
+        if (not remote):
+            logging.info("cannot track locally")
+            return
+        jobs = cache.get("batch/%s/jobs" % batch, remote)
+        k_ = jobs['train'] + jobs['validate'] + jobs['test'] + [jobs['report']]
+        
+        status_ = cloud.status(k_)
+        count = co.Counter(status_)
+        print count
+    except:
+        print "status failed"
+        pass
 
 def review(batch, remote, debug):
     if (not remote):

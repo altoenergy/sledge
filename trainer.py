@@ -55,9 +55,9 @@ def train(batch, params, i, j, remote, debug):
                     if (S >= threshold):
                         break
                 logging.info("SFinal : %s", S)
-                outcome = {'W_' : W_, 'provenance' : i}
+                outcome = {'W_' : W_, 'S' : S, 'provenance' : i}
                 if (debug):
-                    outcome.update({'S' : S, 'F__' : F__})
+                    outcome.update({'F__' : F__})
                 if (S >= threshold):
                     winner_.append(outcome)
                 else:

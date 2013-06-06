@@ -51,3 +51,7 @@ def xpath_elem(obj, path):
         pass
 
     return elem
+
+def parse_number_list(s):
+    ranges = (x.split("-") for x in s.split(","))
+    return [i for r in ranges for i in range(int(r[0]), int(r[-1]) + 1)]

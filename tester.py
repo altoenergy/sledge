@@ -48,7 +48,7 @@ def test(batch, params, i, remote, debug):
             provenance_.append(provenance)
             F__Total += F__
 
-        F__Blend = None
+        F__Blend = np.zeros([portfolio.tMax, portfolio.iMax])
         SBlend = 0
         if (numValidateWinners > 0):
             F__Blend = F__Total / numValidateWinners
@@ -65,7 +65,7 @@ def test(batch, params, i, remote, debug):
         excelStr = "\n".join([",".join(str(val) for val in row) for row in excel__])
         #excelStr = "\n".join(str(excel__))
         
-        result = {'success' : True, 'error' : 'none', 'SBlend' : SBlend, 'provenance' : provenance_, 'F__Blend' : F__Blend, 'excel' : excelStr}
+        result = {'success' : True, 'error' : 'none', 'S_' : S_, 'SBlend' : SBlend, 'provenance' : provenance_, 'F__Blend' : F__Blend, 'excel' : excelStr}
     except (KeyboardInterrupt):
         raise
     except Exception:

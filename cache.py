@@ -30,7 +30,7 @@ def delete_prefix(prfix):
     object_list.sort(key = lambda x: x.count('/'), reverse = True)
     object_iterator = iter(object_list)
     print object_list
-    #object_iterator = cloud.bucket.iterlist(prefix=prefix)
+    #object_iterator = cloud.bucket.iterlist(prefix=prfix)
     iterator_lock = threading.Lock()
 
     def delete_file():

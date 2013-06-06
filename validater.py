@@ -49,9 +49,9 @@ def validate(batch, params, i, remote, debug):
                     W_ = trainWinner['W_']
                     F__ = w.run_W(portfolio, W_, wParams)  
                     S = obj.score(objective, portfolio, F__)
-                    outcome = {'W_' : W_, 'provenance' : iTrain}
+                    outcome = {'W_' : W_, 'S' : S, 'provenance' : iTrain}
                     if (debug):
-                        outcome.update({'S' : S, 'F__' : F__})
+                        outcome.update({'F__' : F__})
                     if (S >= threshold):
                         winner_.append(outcome)
                     else:
