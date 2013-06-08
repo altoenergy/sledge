@@ -27,7 +27,9 @@ def train(batch, params, i, j, remote, debug):
         toDate = episodes['train'][i][1]
         logging.info("fromDate, toDate : %s, %s" % (fromDate, toDate))
         
-        portfolio.instantiate(fromDate, toDate)
+        nFromDate = episodes['train'][i][0]
+        nToDate = episodes['train'][i][1]
+        portfolio.instantiate(fromDate, toDate, True, nFromDate, nToDate)
         
         iters = trainParams['iters']
         draws = trainParams['draws']
