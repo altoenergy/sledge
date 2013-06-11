@@ -18,94 +18,84 @@ import validater
 import tester
 import reporter
 
-def apply_shift(params, target, amount):
-    if (target == "testDays"):
-        params['episodes']['testDays'] = amount
-    elif (target == "trainRatio"):
-        params['episodes']['trainRatio'] = amount
-    elif (target == "validateRatio"):
-        params['episodes']['validateRatio'] = amount
-    elif (target == "alpha"):
-        params['train']['alpha'] = amount
-    elif (target == "threshold"):
-        params['train']['threshold'] = amount
-        params['validate']['threshold'] = amount
-    else:
-        raise InputError("Shift target %s unknown" % target)
+def apply_search(params, target_, value_):
+    for target, value in zip(target_, value_):
+        if (value is None):
+            continue
+        if (target == "testDays"):
+            params['episodes']['testDays'] = value
+        elif (target == "trainRatio"):
+            params['episodes']['trainRatio'] = value
+        elif (target == "validateRatio"):
+            params['episodes']['validateRatio'] = value
+        elif (target == "alpha"):
+            params['train']['alpha'] = value
+        elif (target == "threshold"):
+            params['train']['threshold'] = value
+            params['validate']['threshold'] = value
+        else:
+            raise InputError("Search target %s unknown" % target)
 
-def expand_shifts(study, portfolio, params):
-    shiftParams = params.get('shift')
-    shifts = {'count' : 0, 'target_' : [], 'batch_' : [], 'amount__' : []}
-    if (shiftParams):
-        shifts['target_'] = shiftParams.keys()
-        amount__ = list(it.product(*(shiftParams.values())))
-        shifts['amount__'] = amount__
-        shifts['count'] = len(amount__)
-        shifts['batch_'] = ["%s-%s/%s" % (study, portfolio, i) for i in range(len(amount__))]
-    return shifts
+def build_search(study, portfolio, params):
+    searchParams = params.get('shift')
+    batch_ = ["%s-%s/base" % (study, portfolio)]
+    target_ = []
+    value__ = [[None]]
+    if (searchParams):
+        target_ = searchParams.keys()
+        combo__ = list(it.product(*(searchParams.values())))
+        value__ = [tuple([None for target in target_])] + combo__
+        batch_ += (["%s-%s/%s" % (study, portfolio, i) for i in range(len(combo__))])
+    search = {'target_' : target_, 'value__' : value__, 'batch_' : batch_}
+    return search
 
 def prepare(study, portfolio, remote):
-    origParams = util.load_json_file("study/%s.json" % study)
-    origParams['portfolioKey'] = "portfolio/%s" % portfolio
-    origParams['shift'] = expand_shifts(study, portfolio, origParams)
+    studyParams = util.load_json_file("study/%s.json" % study)
     
-    baseParams = copy.deepcopy(origParams)
-    baseParams['episodes'].update(epi.build_episodes(baseParams['episodes']))
+    search = build_search(study, portfolio, studyParams)
+    logging.info("Caching %s-%s/search" % (study, portfolio))
+    cache.put("batch/%s-%s/search" % (study, portfolio), search, remote)
 
-    shifts = baseParams['shift']    
-    logging.info("Caching %s-%s/base" % (study, portfolio))
-    cache.put("batch/%s-%s/base/params" % (study, portfolio), baseParams, remote)
-    target_ = shifts['target_']
-    for batch, amount_ in zip(shifts['batch_'], shifts['amount__']):
-        params = copy.deepcopy(origParams)
-        for target, amount in zip(target_, amount_):
-            apply_shift(params, target, amount)
+    batch_ = search['batch_']
+    target_ = search['target_']
+    value__ = search['value__']
+    for batch, value_ in zip(batch_, value__):
+        params = copy.deepcopy(studyParams)
         del params['shift']
+        params['portfolioKey'] = "portfolio/%s" % portfolio
+        apply_search(params, target_, value_)
         params['episodes'].update(epi.build_episodes(params['episodes']))
         logging.info("Caching %s" % batch)
         cache.put("batch/%s/params" % batch, params, remote)
 
-def interpret_batches(study, portfolio, batch, remote):
-    params = cache.get("batch/%s-%s/base/params" % (study, portfolio), remote)
-    base = "%s-%s/base" % (study, portfolio)
-    shifts = params['shift']['batch_']
-    if (batch == "base"):
-        return [base]
-    elif (batch == "*"):
-        return [base] + shifts
+def interpret_batches(study, portfolio, batchList, remote):
+    search = cache.get("batch/%s-%s/search" % (study, portfolio), remote)
+    batchName_ = search['batch_']
+    if (batchList == "base"):
+        return [batchName_[0]]
+    elif (batchList == "*"):
+        return batchName_
     else:
-        batch_ = util.parse_number_list(batch)
-        return [shifts[batch] for batch in batch_]
+        batchNum_ = util.parse_number_list(batchList)
+        return [batchName_[batchNum + 1] for batchNum in batchNum_]
 
-def dump(batch, remote, key, xpath, clipboard):
+def dump(study, portfolio, batch, remote, key, xpath, clipboard, showSearchParams):
     cl = tk.Tk() if clipboard else None
     elem = util.xpath_elem(cache.get("batch/%s/%s" % (batch, key), remote), xpath)
-    outStr = elem if xpath == "excel" else pp.pformat(elem)
+    outStr = ""
+    if (showSearchParams):
+        search = cache.get("batch/%s-%s/search" % (study, portfolio), remote)
+        batch_ = search['batch_']
+        value__ = search['value__']
+        i = batch_.index(batch)
+        value_ = value__[i]
+        outStr += batch + ", "
+        for value in value_:
+            outStr += str(value) + ", "
+    outStr += elem if xpath == "excel" else pp.pformat(elem)
     print outStr
     if clipboard:
         cl.clipboard_append(outStr)
-
-def dump_old(study, portfolio, shift, remote, key, xpath, clipboard):
-    cl = tk.Tk() if clipboard else None
-    params = cache.get("batch/%s-%s/params" % (study, portfolio), remote)
-    if shift:
-        shifts = params['shift']
-        outStr = "name," + ",".join(shifts['target_']) +",value"
-        print outStr
-        if clipboard:
-            cl.clipboard_append("%s\n" % outStr)
-        for batch, amount_ in zip(shifts['batch_'], shifts['amount__']):
-            elem = util.xpath_elem(cache.get("batch/%s/%s" % (batch, key), remote), xpath)
-            outStr = batch + "," + ",".join(map(str, amount_)) + "," + pp.pformat(elem)
-            print outStr
-            if clipboard:
-                cl.clipboard_append("%s\n" % outStr)
-    else:
-        elem = util.xpath_elem(cache.get("batch/%s-%s/%s" % (study, portfolio, key), remote), xpath)
-        outStr = elem if xpath == "excel" else pp.pformat(elem)
-        print outStr
-        if clipboard:
-            cl.clipboard_append(outStr)
 
 def run(batch, remote, debug):
     k_Train = train(batch, remote, debug)

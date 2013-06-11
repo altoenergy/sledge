@@ -7,6 +7,7 @@ import episodes as epi
 import portfolio as ptf
 import objective as obj
 import w
+import util
 
 def test(batch, params, i, remote, debug):
     logging.info("--------------")
@@ -57,6 +58,13 @@ def test(batch, params, i, remote, debug):
             SBlend = obj.score(objective, portfolio, F__Blend)
             
         logging.info("SBlend : %s" % SBlend)
+        
+        #points = [util.Point(validateWinner['W_'].tolist()) for validateWinner in validateWinner_]
+        #k = max(2, int(0.25 * len(points)))
+        #cutoff = 0.5
+        #clusters = util.kmeans(points, k, cutoff)
+        #
+        #validateWinner_ = [{'W_' : np.array(c.centroid.coords, dtype=float), 'provenance' : -1} for c in clusters]
         
         header_0 = ["t", "date"]
         header_1 = ["F[%s]" % k for k in range(portfolio.iMax)]
