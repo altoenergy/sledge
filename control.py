@@ -112,12 +112,9 @@ while (True):
         elif (action == "dump" or action == "export"):
             key = util.get_str_input("key (report) : ", "report")
             xpath = util.get_str_input("xpath () : ", "")
-            showParams = util.get_bool_input("show params (false) : ", False)
+            showParams = util.get_bool_input("show search values (false) : ", False)
             batch_ = batcher.interpret_batches(study, portfolio, batches, remote)
-            for batch in batch_:
-                if not showParams:
-                    print batch
-                batcher.dump(study, portfolio, batch, remote, key, xpath, action == "export", showParams)
+            batcher.dump_multiple(study, portfolio, batch_, remote, key, xpath, action == "export", showParams)
         elif (action == "clear"):
             key = util.get_str_input("key (batch/%s-%s) : " % (study, portfolio), "batch/%s-%s" % (study, portfolio))
             if (remote):

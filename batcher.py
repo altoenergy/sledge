@@ -79,20 +79,23 @@ def interpret_batches(study, portfolio, batchList, remote):
         batchNum_ = util.parse_number_list(batchList)
         return [batchName_[batchNum + 1] for batchNum in batchNum_]
 
-def dump(study, portfolio, batch, remote, key, xpath, clipboard, showSearchParams):
+def dump_multiple(study, portfolio, batch_, remote, key, xpath, clipboard, showSearchValues):
     cl = tk.Tk() if clipboard else None
-    elem = util.xpath_elem(cache.get("batch/%s/%s" % (batch, key), remote), xpath)
     outStr = ""
-    if (showSearchParams):
-        search = cache.get("batch/%s-%s/search" % (study, portfolio), remote)
-        batch_ = search['batch_']
-        value__ = search['value__']
-        i = batch_.index(batch)
-        value_ = value__[i]
-        outStr += batch + ", "
-        for value in value_:
-            outStr += str(value) + ", "
-    outStr += elem if xpath == "excel" else pp.pformat(elem)
+    search = cache.get("batch/%s-%s/search" % (study, portfolio), remote)
+    if (showSearchValues):
+        outStr += "batch," + ",".join(map(str, search['target_'])) + ",value\n"
+    for batch in batch_:
+        elem = util.xpath_elem(cache.get("batch/%s/%s" % (batch, key), remote), xpath)
+        if (showSearchValues):
+            i = search['batch_'].index(batch)
+            value_ = search['value__'][i]
+            outStr += batch + "," + ",".join(map(str, value_)) + ","
+        else:
+            outStr += batch + "\n"
+        outStr += elem if xpath == "excel" else pp.pformat(elem)
+        if (batch != batch_[-1]):
+            outStr += "\n"
     print outStr
     if clipboard:
         cl.clipboard_append(outStr)
