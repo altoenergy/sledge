@@ -8,6 +8,7 @@ import portfolio as ptf
 import objective as obj
 import w
 import util
+import date
 
 def test(batch, params, i, remote, debug):
     logging.info("--------------")
@@ -24,10 +25,12 @@ def test(batch, params, i, remote, debug):
         
         fromDate = episodes['test'][i][0]
         toDate = episodes['test'][i][1]
-        logging.info("fromDate, toDate : %s, %s" % (fromDate, toDate))
+        logging.info("fromDate, toDate : %s, %s" % (date.to_yyyymmdd(fromDate), date.to_yyyymmdd(toDate)))
         
         nFromDate = episodes['train'][i][0]
         nToDate = episodes['train'][i][1]
+        logging.info("nFromDate, nToDate : %s, %s" % (date.to_yyyymmdd(nFromDate), date.to_yyyymmdd(nToDate)))
+        
         portfolio.instantiate(fromDate, toDate, True, nFromDate, nToDate)
         
         objective = testParams['objective']
@@ -70,7 +73,7 @@ def test(batch, params, i, remote, debug):
         header_1 = ["F[%s]" % k for k in range(portfolio.iMax)]
         header_2 = ["r[%s]" % k for k in range(portfolio.iMax)]
         header__ = [header_0 + header_1 + header_2]
-        body__ = [[j] + [portfolio.date_[j]] + list(F__Blend[j]) + list(portfolio.r__[j]) for j in range(portfolio.tMax)]
+        body__ = [[j] + [date.to_yyyymmdd(portfolio.date_[j])] + list(F__Blend[j]) + list(portfolio.r__[j]) for j in range(portfolio.tMax)]
         excel__ = header__ + body__
         excelStr = "\n".join([",".join(str(val) for val in row) for row in excel__])
         #excelStr = "\n".join(str(excel__))

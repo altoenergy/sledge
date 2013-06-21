@@ -3,14 +3,16 @@ import math
 import csv
 import json
 import numpy as np
+import date
 import util
 
 class Feature:
-    def __init__(self, key, fromDate, toDate):
+    def __init__(self, key, fromDt, toDt):
         path = util.featurePath("%s.feature" % key)
-        self.date_, self.value_ = np.loadtxt(open(path, 'r'), delimiter = ',', unpack = True)
-        self.date_ = self.date_.astype(np.int)
-        self.range_dates(fromDate, toDate)
+        yyyymmdd_, self.value_ = np.loadtxt(open(path, 'r'), delimiter = ',', unpack = True)
+        yyyymmdd_ = yyyymmdd_.astype(int)
+        self.date_ = [date.from_yyyymmdd(yyyymmdd) for yyyymmdd in yyyymmdd_]
+        self.range_dates(fromDt, toDt)
         
     @staticmethod
     def common_dates(feature_):
@@ -23,19 +25,19 @@ class Feature:
         aDict = dict(zip(self.date_, self.value_))
         self.date_, self.value_ = zip(*[(date, aDict[date]) for date in filter_])
 
-    def range_dates(self, fromDate, toDate):
+    def range_dates(self, fromDate, toDt):
         aDict = dict(zip(self.date_, self.value_))
-        rangeDate_ = filter(lambda d: (d >= fromDate and d <= toDate), self.date_)
+        rangeDate_ = filter(lambda d: (d >= fromDate and d <= toDt), self.date_)
         self.date_, self.value_ = zip(*[(date, aDict[date]) for date in rangeDate_])
     
 class Portfolio:
     def __init__(self, portfolio):
-        fromDate = portfolio['fromDate']
-        toDate = portfolio['toDate']
+        fromDt = date.from_yyyymmdd(portfolio['fromDate'])
+        toDt = date.from_yyyymmdd(portfolio['toDate'])
         elements = portfolio['elements']
         self.iMax = len(elements)
-        tradable_ = [Feature(element['tradable'], fromDate, toDate) for element in elements]
-        observable__ = [[Feature(observable, fromDate, toDate) for observable in element['observables']] for element in elements]
+        tradable_ = [Feature(element['tradable'], fromDt, toDt) for element in elements]
+        observable__ = [[Feature(observable, fromDt, toDt) for observable in element['observables']] for element in elements]
         self.c_ = np.array([element['cost'] for element in elements], float)
         self.jLen_ = np.array([len(observable_) + 2 for observable_ in observable__])
         self.jLen = np.sum(self.jLen_)
@@ -57,15 +59,16 @@ class Portfolio:
         self.r__Orig = price__ - np.roll(price__, 1, 0)
         self.r__Orig[0] = 0
 
-    def instantiate(self, fromDate, toDate, normalize, nFromDate, nToDate):
+    def instantiate(self, fromDt, toDt, normalize, nFromDt, nToDt):
         npDate_Orig = np.array(self.date_Orig)
         
-        fromIdx = (np.abs(npDate_Orig - fromDate)).argmin()
-        toIdx = (np.abs(npDate_Orig - toDate)).argmin() + 1
+        fromIdx = date.nearest_index(self.date_Orig, fromDt)
+        toIdx = date.nearest_index(self.date_Orig, toDt) + 1
+
         tMax = toIdx - fromIdx
         
-        nFromIdx = (np.abs(npDate_Orig - nFromDate)).argmin()
-        nToIdx = (np.abs(npDate_Orig - nToDate)).argmin() + 1
+        nFromIdx = date.nearest_index(self.date_Orig, nFromDt)
+        nToIdx = date.nearest_index(self.date_Orig, nToDt) + 1
             
         ones = np.ones([tMax])
         zeros = np.zeros([tMax])
@@ -89,4 +92,3 @@ class Portfolio:
     def split(self, X_):
         x__ = [X_[jFrom:jTo] for (jFrom, jTo) in self.jFromTo_]
         return x__
-    

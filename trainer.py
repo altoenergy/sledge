@@ -8,6 +8,7 @@ import portfolio as ptf
 import objective as obj
 import w
 import moody as moo
+import date
     
 def train(batch, params, i, j, remote, debug):
     logging.info("--------------")
@@ -25,10 +26,12 @@ def train(batch, params, i, j, remote, debug):
         
         fromDate = episodes['train'][i][0]
         toDate = episodes['train'][i][1]
-        logging.info("fromDate, toDate : %s, %s" % (fromDate, toDate))
+        logging.info("fromDate, toDate : %s, %s" % (date.to_yyyymmdd(fromDate), date.to_yyyymmdd(toDate)))
         
         nFromDate = episodes['train'][i][0]
         nToDate = episodes['train'][i][1]
+        logging.info("nFromDate, nToDate : %s, %s" % (date.to_yyyymmdd(nFromDate), date.to_yyyymmdd(nToDate)))
+        
         portfolio.instantiate(fromDate, toDate, True, nFromDate, nToDate)
         
         iters = trainParams['iters']

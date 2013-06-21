@@ -6,6 +6,7 @@ import episodes as epi
 import portfolio as ptf
 import objective as obj
 import w
+import date
 
 def validate(batch, params, i, remote, debug):
     logging.info("--------------")
@@ -23,10 +24,12 @@ def validate(batch, params, i, remote, debug):
         
         fromDate = episodes['validate'][i][0]
         toDate = episodes['validate'][i][1]
-        logging.info("fromDate, toDate : %s, %s" % (fromDate, toDate))
+        logging.info("fromDate, toDate : %s, %s" % (date.to_yyyymmdd(fromDate), date.to_yyyymmdd(toDate)))
         
         nFromDate = episodes['train'][i][0]
         nToDate = episodes['train'][i][1]
+        logging.info("nFromDate, nToDate : %s, %s" % (date.to_yyyymmdd(nFromDate), date.to_yyyymmdd(nToDate)))
+        
         portfolio.instantiate(fromDate, toDate, True, nFromDate, nToDate)
         
         numTrainIters = trainParams['iters']

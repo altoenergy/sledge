@@ -2,44 +2,32 @@ import sys
 sys.dont_write_bytecode = True
 import json
 import numpy as np
-import datetime as dt
+import date
 
 def build_episodes(episodesParams):
-    fromDate = episodesParams['fromDate']
-    toDate = episodesParams['toDate']
+    fromDt = date.from_yyyymmdd(episodesParams['fromDate'])
+    toDt = date.from_yyyymmdd(episodesParams['toDate'])
     testDays = episodesParams['testDays']
     validateRatio = episodesParams['validateRatio']
     trainRatio = episodesParams['trainRatio']
-    
+
     validateDays = testDays * validateRatio
     trainDays = testDays * trainRatio
     episodeDays = trainDays + validateDays + testDays
     
-    dFrom = dt.datetime.strptime(str(fromDate),'%Y%m%d')
-    dTo = dt.datetime.strptime(str(toDate),'%Y%m%d')
-    diff = dTo - dFrom
-    diffDays = diff.days
+    diffDays = date.days_between(fromDt, toDt)
     numEpisodes = int(diffDays / float(testDays))
     subArrays = np.array_split(np.array(range(diffDays)), numEpisodes)
-    subArrays = subArrays[:-(trainRatio + validateRatio)]
-    trainFromTos = []
-    validateFromTos = []
-    testFromTos = []
-    for subArray in subArrays:
-        trainFrom = dFrom + dt.timedelta(days = int(subArray[0]))
-        trainTo = dFrom + dt.timedelta(days = int(subArray[0]) + trainDays)
-        validateFrom = dFrom + dt.timedelta(days = int(subArray[0]) + trainDays + 1)
-        validateTo = dFrom + dt.timedelta(days = int(subArray[0]) + trainDays + validateDays)
-        testFrom = dFrom + dt.timedelta(days = int(subArray[0]) + trainDays + validateDays + 1)
-        testTo = dFrom + dt.timedelta(days = int(subArray[0]) + trainDays + validateDays + testDays)
-        trainFrom = int(trainFrom.strftime('%Y%m%d'))
-        trainTo = int(trainTo.strftime('%Y%m%d'))
-        validateFrom = int(validateFrom.strftime('%Y%m%d'))
-        validateTo = int(validateTo.strftime('%Y%m%d'))
-        testFrom = int(testFrom.strftime('%Y%m%d'))
-        testTo = int(testTo.strftime('%Y%m%d'))
-        trainFromTos.append((trainFrom, trainTo))
-        validateFromTos.append((validateFrom, validateTo))
-        testFromTos.append((testFrom, testTo))
-    episodes = {'num' : len(subArrays), 'train' : trainFromTos, 'validate' : validateFromTos, 'test' : testFromTos}
+    episodeFrom_ = [int(subArray[0]) for subArray in subArrays[:-(trainRatio + validateRatio)]]
+    
+    trainFrom_ = [date.add_days(fromDt, episodeFrom) for episodeFrom in episodeFrom_]
+    trainTo_ = [date.add_days(fromDt, episodeFrom + trainDays) for episodeFrom in episodeFrom_]
+    validateFrom_ = [date.add_days(fromDt, episodeFrom + trainDays + 1) for episodeFrom in episodeFrom_]
+    validateTo_ = [date.add_days(fromDt, episodeFrom + trainDays + validateDays) for episodeFrom in episodeFrom_]
+    testFrom_ = [date.add_days(fromDt, episodeFrom + trainDays + validateDays + 1) for episodeFrom in episodeFrom_]
+    testTo_ = [date.add_days(fromDt, episodeFrom + trainDays + validateDays + testDays) for episodeFrom in episodeFrom_]
+    trainFromTo_ = zip(trainFrom_, trainTo_)
+    validateFromTo_ = zip(validateFrom_, validateTo_)
+    testFromTo_ = zip(testFrom_, testTo_)
+    episodes = {'fromDate' : fromDt, 'toDate' : toDt, 'num' : len(episodeFrom_), 'train' : trainFromTo_, 'validate' : validateFromTo_, 'test' : testFromTo_}
     return episodes
