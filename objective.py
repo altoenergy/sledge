@@ -10,14 +10,6 @@ def score(objective, portfolio, F__):
         return sharp(portfolio, F__)
     else:
         return 0
-#    
-#def is_winner(winners, objective, threshold, portfolio, W_, wParams):
-#    F__ = w.run_W(portfolio, W_, wParams)  
-#    S = score(objective, portfolio, F__)
-#    if (S >= threshold):
-#        winners.append((S, W_))
-#        return True
-#    return False
     
 def returns(portfolio, F__):
     R = 0

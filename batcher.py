@@ -36,6 +36,23 @@ def apply_search(params, target_, value_):
         else:
             raise InputError("Search target %s unknown" % target)
 
+def read_search(params, target_):
+    value_ = []
+    for target in target_:
+        if (target == "testDays"):
+            value_.append(params['episodes']['testDays'])
+        elif (target == "trainRatio"):
+            value_.append(params['episodes']['trainRatio'])
+        elif (target == "validateRatio"):
+            value_.append(params['episodes']['validateRatio'])
+        elif (target == "alpha"):
+            value_.append(params['train']['alpha'])
+        elif (target == "threshold"):
+            value_.append(params['train']['threshold'])
+        else:
+            raise InputError("Search target %s unknown" % target)
+    return value_
+
 def build_search(study, portfolio, params):
     searchParams = params.get('shift')
     batch_ = ["%s-%s/base" % (study, portfolio)]
@@ -44,7 +61,7 @@ def build_search(study, portfolio, params):
     if (searchParams):
         target_ = searchParams.keys()
         combo__ = list(it.product(*(searchParams.values())))
-        value__ = [tuple([None for target in target_])] + combo__
+        value__ = [tuple(read_search(params, target_))] + combo__
         batch_ += (["%s-%s/%s" % (study, portfolio, i) for i in range(len(combo__))])
     search = {'target_' : target_, 'value__' : value__, 'batch_' : batch_}
     return search
