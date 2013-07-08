@@ -96,6 +96,31 @@ def interpret_batches(study, portfolio, batchList, remote):
         batchNum_ = util.parse_number_list(batchList)
         return [batchName_[batchNum + 1] for batchNum in batchNum_]
 
+def dump_key(search, batch, remote, key, xpath, showSearchValues):
+    elem = util.xpath_elem(cache.get("batch/%s/%s" % (batch, key), remote), xpath)
+    outStr = ""
+    if (showSearchValues):
+        i = search['batch_'].index(batch)
+        value_ = search['value__'][i]
+        outStr += batch + "," + ",".join(map(str, value_)) + ","
+    else:
+        outStr += batch + "\n"
+    outStr += elem if xpath == "excel" else pp.pformat(elem)
+    return outStr
+
+def dump_single(search, batch, remote, key, xpath, showSearchValues):
+    if (key == "train/*" or key == "validate/*" or key == "test/*"):
+        outStr = ""
+        params = cache.get("batch/%s/params" % batch, remote)
+        numEpisodes = params['episodes']['num']
+        base = key[:key.find("/")]
+        for i in range(numEpisodes):
+            outStr += "\n%s/%s\n" % (base, i)
+            outStr += dump_key(search, batch, remote, "%s/%s" % (base, i), xpath, showSearchValues)
+        return outStr
+    else:
+        return dump_key(search, batch, remote, key, xpath, showSearchValues)
+    
 def dump_multiple(study, portfolio, batch_, remote, key, xpath, clipboard, showSearchValues):
     cl = tk.Tk() if clipboard else None
     outStr = ""
@@ -103,14 +128,7 @@ def dump_multiple(study, portfolio, batch_, remote, key, xpath, clipboard, showS
     if (showSearchValues):
         outStr += "batch," + ",".join(map(str, search['target_'])) + ",value\n"
     for batch in batch_:
-        elem = util.xpath_elem(cache.get("batch/%s/%s" % (batch, key), remote), xpath)
-        if (showSearchValues):
-            i = search['batch_'].index(batch)
-            value_ = search['value__'][i]
-            outStr += batch + "," + ",".join(map(str, value_)) + ","
-        else:
-            outStr += batch + "\n"
-        outStr += elem if xpath == "excel" else pp.pformat(elem)
+        outStr += dump_single(search, batch, remote, key, xpath, showSearchValues)
         if (batch != batch_[-1]):
             outStr += "\n"
     print outStr
