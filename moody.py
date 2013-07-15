@@ -24,7 +24,8 @@ def dF_dW_init_ES(portfolio, F__, w__, dw):
         for i in range(portfolio.iMax):
             for j in range(portfolio.jLen_[i]):
                 m = 2.0 / 9 if (n == i) else -1.0 / 9
-                dF_dW_[n, J] = m * portfolio.x___[1, i, j]
+#                dF_dW_[n, J] = m * portfolio.x___[1, i, j]
+                dF_dW_[n, J] = m * portfolio.x___[1][i, j]
                 J += 1
     return dF_dW_
     
@@ -64,7 +65,7 @@ def run_epoch(portfolio, W_, alpha, wParams):
             J = 0
             for i in range(portfolio.iMax):
                 for j in range(portfolio.jLen_[i]):
-                    x = x__[n, j] if (n == i) else 0
+                    x = x__[n][j] if (n == i) else 0
                     dF_dW_[n, J] = F__[t, n] * (1 - F__[t, n]) * (x + w__[n][-1] * dF_dW_[n, J])
                     J += 1
         

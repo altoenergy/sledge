@@ -84,7 +84,8 @@ class Portfolio:
                 rows.append((value_[fromIdx:toIdx] - m) / st)
             rows.append(zeros)
         observation__ = np.swapaxes(np.array(rows), 0, 1)
-        self.x___ = np.array([self.split(observation__[t]) for t in range(tMax)]) # (date x asset x feature)
+        #self.x___ = np.array([self.split(observation__[t]) for t in range(tMax)]) # (date x asset x feature)
+        self.x___ = [self.split(observation__[t]) for t in range(tMax)] # (date x asset x feature)
         self.date_ = self.date_Orig[fromIdx:toIdx]
         self.r__ = self.r__Orig[fromIdx:toIdx]
         self.tMax = tMax

@@ -13,7 +13,8 @@ def eval_w(prevF_, x__, w__, wParams):
     wEval = wParams['eval']
     if (wEval == 'exp'):
         for i in range(iMax):
-            x__[i, -1] = prevF_[i]
+#            x__[i, -1] = prevF_[i]
+            x__[i][-1] = prevF_[i]
             f_[i] = math.exp(np.dot(w__[i], x__[i]))
         F_ = f_ / np.sum(f_)
     elif (wEval == 'pv'):
