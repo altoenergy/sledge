@@ -105,7 +105,7 @@ def dump_key(search, batch, remote, key, xpath, showSearchValues):
         outStr += batch + "," + ",".join(map(str, value_)) + ","
     else:
         outStr += batch + "\n"
-    outStr += elem if xpath == "excel" else pp.pformat(elem)
+    outStr += str(elem) if xpath == "excel" else pp.pformat(elem)
     return outStr
 
 def dump_single(search, batch, remote, key, xpath, showSearchValues):
